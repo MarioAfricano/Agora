@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 
 from sqlalchemy import BigInteger, DateTime, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
@@ -42,3 +42,20 @@ class Company(Base):
     igdb_id: Mapped[int] = mapped_column(BigInteger, unique=True)
     name: Mapped[str]
 
+
+class Game(Base):
+    __tablename__ = "games"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    igdb_id: Mapped[int] = mapped_column(BigInteger, unique=True)
+    name: Mapped[str]
+    summary: Mapped[str | None]
+    release_date: Mapped[date | None]
+    cover_image_id: Mapped[str | None]
+    cover_s3_key: Mapped[str | None]
+    imported_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )

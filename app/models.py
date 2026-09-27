@@ -1,6 +1,6 @@
 from datetime import datetime, date
 
-from sqlalchemy import BigInteger, DateTime, func, ForeignKey
+from sqlalchemy import BigInteger, DateTime, func, ForeignKey, CheckConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -81,3 +81,20 @@ class GamePlatform(Base):
     platform_id: Mapped[int] = mapped_column(
         BigInteger, ForeignKey("platforms.id", ondelete="CASCADE"), primary_key=True
     )
+
+
+class GameCompany(Base):
+    __tablename__ = "game_companies"
+    __table_args__ = (
+    CheckConstraint("is_developer OR is_publisher", name="has_role"),
+    )
+
+    game_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("games.id", ondelete="CASCADE"), primary_key=True
+    )
+    company_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("companies.id", ondelete="CASCADE"), primary_key=True
+    )
+    is_developer: Mapped[bool]
+    is_publisher: Mapped[bool]
+

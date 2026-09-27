@@ -1,6 +1,6 @@
 from datetime import datetime, date
 
-from sqlalchemy import BigInteger, DateTime, func
+from sqlalchemy import BigInteger, DateTime, func, ForeignKey
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -58,4 +58,26 @@ class Game(Base):
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+
+class GameGenre(Base):
+    __tablename__ = "game_genres"
+
+    game_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("games.id", ondelete="CASCADE"), primary_key=True
+    )
+    genre_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("genres.id", ondelete="CASCADE"), primary_key=True
+    )
+
+
+class GamePlatform(Base):
+    __tablename__ = "game_platforms"
+
+    game_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("games.id", ondelete="CASCADE"), primary_key=True
+    )
+    platform_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("platforms.id", ondelete="CASCADE"), primary_key=True
     )

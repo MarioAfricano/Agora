@@ -143,3 +143,31 @@ class LibraryEntry(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+
+
+class ImportJob(Base):
+    __tablename__ = "import_jobs"
+    __table_args__ = (
+        CheckConstraint("attempts >= 0", name="non_negative_attempts"),
+        CheckConstraint(
+            "status IN ('pending', 'running', 'succeeded', 'failed')", name="valid_status"
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("users.id", ondelete="CASCADE")
+    )
+    igdb_id: Mapped[int] = mapped_column(BigInteger)
+    status: Mapped[str] = mapped_column(server_default="pending")
+    game_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("games.id", ondelete="SET NULL")
+    )
+    error: Mapped[str | None]
+    attempts: Mapped[int] = mapped_column(server_default="0")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )

@@ -5,3 +5,4 @@ psycopg[binary]
 pydantic-settings
 alembic
 argon2-cffi
+jinja2

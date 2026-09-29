@@ -8,6 +8,7 @@
   <header>
     <a href="/">Agora</a>
     {% if current_user %}
+      <a href="/library">My library</a>
       <span>{{ current_user.email }}</span>
       <form method="post" action="/logout">
         <button type="submit">Log out</button>

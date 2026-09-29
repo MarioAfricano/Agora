@@ -49,6 +49,9 @@ def register(
     request: Request,
     current_user: User | None = Depends(get_current_user)
 ):
+    if current_user is not None:
+        return RedirectResponse(url="/library", status_code=303)
+    
     return templates.TemplateResponse(request, "register.html", {"current_user": current_user})
 
 
@@ -93,7 +96,10 @@ def register_submit(
             status_code=409,
         )
 
-    return RedirectResponse(url="/", status_code=303)
+    request.session.clear()
+    request.session["user_id"] = user.id
+
+    return RedirectResponse(url="/library", status_code=303)
 
 
 @app.get("/login")
@@ -101,6 +107,9 @@ def login(
     request: Request,
     current_user: User | None = Depends(get_current_user)          
 ):
+    if current_user is not None:
+        return RedirectResponse(url="/library", status_code=303)
+
     return templates.TemplateResponse(request, "login.html", {"current_user": current_user})
 
 
@@ -125,10 +134,23 @@ def login_submit(
     
     request.session.clear()
     request.session["user_id"] = user.id
-    return RedirectResponse(url="/", status_code=303)
+    return RedirectResponse(url="/library", status_code=303)
 
 
 @app.post("/logout")
 def logout(request: Request):
     request.session.clear()
     return RedirectResponse(url="/", status_code=303)
+
+
+@app.get("/library")
+def library(
+    request: Request,
+    current_user: User | None = Depends(get_current_user)
+):
+    if current_user is None:
+        return RedirectResponse(url="/login", status_code=303)
+
+    return templates.TemplateResponse(
+        request, "library.html", {"current_user": current_user}
+    )

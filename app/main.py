@@ -8,6 +8,7 @@ from sqlalchemy.exc import OperationalError, IntegrityError
 from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
 
+from app.auth import get_current_user
 from app.config import settings
 from app.db import engine, get_db
 from app.models import User
@@ -20,8 +21,13 @@ templates = Jinja2Templates(directory="app/templates")
 
 
 @app.get("/")
-def home(request: Request):
-    return templates.TemplateResponse(request, "home.html", {})
+def home(
+    request: Request,
+    current_user: User | None = Depends(get_current_user)    
+):
+    return templates.TemplateResponse(
+        request, "home.html", {"current_user": current_user}
+    )
 
 
 @app.get("/health")
@@ -37,9 +43,14 @@ def health():
     
     return {"status": "ok", "database": "ok"}
 
+
 @app.get("/register")
-def register(request: Request):
-    return templates.TemplateResponse(request, "register.html", {})
+def register(
+    request: Request,
+    current_user: User | None = Depends(get_current_user)
+):
+    return templates.TemplateResponse(request, "register.html", {"current_user": current_user})
+
 
 @app.post("/register")
 def register_submit(
@@ -77,7 +88,7 @@ def register_submit(
             "register.html",
             {
                 "error": "An account with this email address already exists.",
-                "email": email
+                "email": email,
             },
             status_code=409,
         )
@@ -86,8 +97,11 @@ def register_submit(
 
 
 @app.get("/login")
-def login(request: Request):
-    return templates.TemplateResponse(request, "login.html", {})
+def login(
+    request: Request,
+    current_user: User | None = Depends(get_current_user)          
+):
+    return templates.TemplateResponse(request, "login.html", {"current_user": current_user})
 
 
 @app.post("/login")
@@ -102,12 +116,12 @@ def login_submit(
     user = db.scalar(select(User).where(User.email == email))
 
     if user is None or not verify_password(password, user.password_hash):
-         return templates.TemplateResponse(
-             request,
-             "login.html",
-             {"error": "Invalid email or password.", "email": email},
-             status_code=400,
-         )
+        return templates.TemplateResponse(
+            request,
+            "login.html",
+            {"error": "Invalid email or password.", "email": email},
+            status_code=400,
+        )
     
     request.session.clear()
     request.session["user_id"] = user.id

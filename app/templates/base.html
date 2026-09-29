@@ -7,11 +7,15 @@
 <body>
   <header>
     <a href="/">Agora</a>
-    <a href="/register">Sign up</a>
-    <a href="/login">Log in</a>
-    <form method="post" action="/logout">
-      <button type="submit">Log out</button>
-    </form>
+    {% if current_user %}
+      <span>{{ current_user.email }}</span>
+      <form method="post" action="/logout">
+        <button type="submit">Log out</button>
+      </form>
+    {% else %}
+      <a href="/register">Sign up</a>
+      <a href="/login">Log in</a>
+    {% endif %}
   </header>
   <main>
     {% block content %}{% endblock %}

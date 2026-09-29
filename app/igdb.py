@@ -29,6 +29,24 @@ class IGDBClient:
             self._token = data["access_token"]
             self._token_expires_at = time.time() + data["expires_in"]
         return self._token
-
+    
+    def search_games(self, query: str) -> list[dict]:
+        query = query.replace('"', "")
+        body = (
+            f'search "{query}";'
+            " fields name, first_release_date, cover.image_id;"
+            " limit 10;"
+        )
+        response = httpx.post(
+            f"{API_URL}/games",
+            headers={
+                "Client-ID": settings.igdb_client_id,
+                "Authorization": f"Bearer {self._get_token()}",
+            },
+            content=body,
+            timeout=10,
+        )
+        response.raise_for_status()
+        return response.json()
 
 igdb = IGDBClient()

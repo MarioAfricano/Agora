@@ -112,3 +112,9 @@ def login_submit(
     request.session.clear()
     request.session["user_id"] = user.id
     return RedirectResponse(url="/", status_code=303)
+
+
+@app.post("/logout")
+def logout(request: Request):
+    request.session.clear()
+    return RedirectResponse(url="/", status_code=303)

@@ -1,12 +1,15 @@
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
-from fastapi.templating import Jinja2Templates
+from typing import Annotated
 
+from fastapi import FastAPI, Request, Depends, Form
+from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.templating import Jinja2Templates
 from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
+from sqlalchemy.orm import Session
 
-from app.db import engine
-
+from app.db import engine, get_db
+from app.security import hash_password
+from app.models import User
 
 app = FastAPI(title="Agora")
 templates = Jinja2Templates(directory="app/templates")
@@ -33,3 +36,16 @@ def health():
 @app.get("/register")
 def register(request: Request):
     return templates.TemplateResponse(request, "register.html", {})
+
+@app.post("/register")
+def register_submit(
+    email: Annotated[str, Form()],
+    password: Annotated[str, Form()],
+    db: Session = Depends(get_db),
+):
+    email = email.strip().lower()
+    user = User(email=email, password_hash=hash_password(password))
+
+    db.add(user)
+    db.commit()
+    return RedirectResponse(url="/", status_code=303)

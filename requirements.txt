@@ -6,3 +6,4 @@ pydantic-settings
 alembic
 argon2-cffi
 jinja2
+python-multipart

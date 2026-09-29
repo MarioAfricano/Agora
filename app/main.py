@@ -6,13 +6,16 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy import text
 from sqlalchemy.exc import OperationalError, IntegrityError
 from sqlalchemy.orm import Session
+from starlette.middleware.sessions import SessionMiddleware
 
+from app.config import settings
 from app.db import engine, get_db
 from app.models import User
 from app.security import hash_password
 
 
 app = FastAPI(title="Agora")
+app.add_middleware(SessionMiddleware, secret_key=settings.secret_key)
 templates = Jinja2Templates(directory="app/templates")
 
 

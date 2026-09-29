@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import FastAPI, Request, Depends, Form
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import text
+from sqlalchemy import text, select
 from sqlalchemy.exc import OperationalError, IntegrityError
 from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
@@ -11,7 +11,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from app.config import settings
 from app.db import engine, get_db
 from app.models import User
-from app.security import hash_password
+from app.security import hash_password, verify_password
 
 
 app = FastAPI(title="Agora")
@@ -82,4 +82,33 @@ def register_submit(
             status_code=409,
         )
 
+    return RedirectResponse(url="/", status_code=303)
+
+
+@app.get("/login")
+def login(request: Request):
+    return templates.TemplateResponse(request, "login.html", {})
+
+
+@app.post("/login")
+def login_submit(
+    request: Request,
+    email: Annotated[str, Form()],
+    password: Annotated[str, Form()],
+    db: Session = Depends(get_db),
+):
+    email = email.strip().lower()
+
+    user = db.scalar(select(User).where(User.email == email))
+
+    if user is None or not verify_password(password, user.password_hash):
+         return templates.TemplateResponse(
+             request,
+             "login.html",
+             {"error": "Invalid email or password.", "email": email},
+             status_code=400,
+         )
+    
+    request.session.clear()
+    request.session["user_id"] = user.id
     return RedirectResponse(url="/", status_code=303)

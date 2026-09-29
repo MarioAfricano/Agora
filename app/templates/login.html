@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Log in · Agora{% endblock %}
+
+{% block content %}
+  <h1>Log in</h1>
+  <form method="post" action="/login">
+    <p>
+      <label for="email">Email</label>
+      <input value="{{ email }}" type="email" id="email" name="email" required>
+    </p>
+
+    <p>
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" required>
+    </p>
+
+    <button type="submit">Login</button>
+  </form>
+  {% if error %}
+    <p role="alert">{{ error }}</p>
+  {% endif %}
+{% endblock %}

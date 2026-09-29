@@ -8,3 +8,4 @@ argon2-cffi
 jinja2
 python-multipart
 itsdangerous
+httpx

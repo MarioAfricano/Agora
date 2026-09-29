@@ -4,12 +4,13 @@ from fastapi import FastAPI, Request, Depends, Form
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import text
-from sqlalchemy.exc import OperationalError
+from sqlalchemy.exc import OperationalError, IntegrityError
 from sqlalchemy.orm import Session
 
 from app.db import engine, get_db
-from app.security import hash_password
 from app.models import User
+from app.security import hash_password
+
 
 app = FastAPI(title="Agora")
 templates = Jinja2Templates(directory="app/templates")
@@ -39,13 +40,43 @@ def register(request: Request):
 
 @app.post("/register")
 def register_submit(
+    request: Request,
     email: Annotated[str, Form()],
     password: Annotated[str, Form()],
     db: Session = Depends(get_db),
-):
+): 
     email = email.strip().lower()
-    user = User(email=email, password_hash=hash_password(password))
 
-    db.add(user)
-    db.commit()
+    if len(password) < 8:
+        return templates.TemplateResponse(
+            request,
+            "register.html",
+            {"error": "Password must be at least 8 characters.", "email": email},
+            status_code=400,
+        )
+
+    if "@" not in email:
+        return templates.TemplateResponse(
+            request,
+            "register.html",
+            {"error": "Email address must contain '@'.", "email": email},
+            status_code=400,
+        )
+
+    user = User(email=email, password_hash=hash_password(password))
+    try:
+        db.add(user)
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        return templates.TemplateResponse(
+            request,
+            "register.html",
+            {
+                "error": "An account with this email address already exists.",
+                "email": email
+            },
+            status_code=409,
+        )
+
     return RedirectResponse(url="/", status_code=303)

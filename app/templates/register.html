@@ -5,13 +5,19 @@
 {% block content %}
   <h1>Create your account</h1>
   <form method="post" action="/register">
-  <label for="email">Email</label>
-  <input type="email" id="email" name="email" required>
+    <p>
+      <label for="email">Email</label>
+      <input value="{{ email }}" type="email" id="email" name="email" required>
+    </p>
 
-  <label for="password">Password</label>
-  <input type="password" id="password" name="password" required minlength="8">
+    <p>
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" required minlength="8">
+    </p>
 
-  <button type="submit">Create account</button>
-</form>
+    <button type="submit">Create account</button>
+  </form>
+  {% if error %}
+    <p role="alert">{{ error }}</p>
+  {% endif %}
 {% endblock %}
-

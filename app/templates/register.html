@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Sign up · Agora{% endblock %}
+
+{% block content %}
+  <h1>Create your account</h1>
+  <form method="post" action="/register">
+  <label for="email">Email</label>
+  <input type="email" id="email" name="email" required>
+
+  <label for="password">Password</label>
+  <input type="password" id="password" name="password" required minlength="8">
+
+  <button type="submit">Create account</button>
+</form>
+{% endblock %}
+

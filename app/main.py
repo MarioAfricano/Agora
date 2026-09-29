@@ -29,3 +29,7 @@ def health():
         )
     
     return {"status": "ok", "database": "ok"}
+
+@app.get("/register")
+def register(request: Request):
+    return templates.TemplateResponse(request, "register.html", {})

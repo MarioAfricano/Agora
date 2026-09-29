@@ -1,4 +1,4 @@
-from datetime import datetime, date
+from datetime import date, datetime
 from decimal import Decimal
 
 from sqlalchemy import (
@@ -6,10 +6,10 @@ from sqlalchemy import (
     CheckConstraint,
     DateTime,
     ForeignKey,
-    UniqueConstraint,
-    func,
     Numeric,
     SmallInteger,
+    UniqueConstraint,
+    func,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -95,9 +95,7 @@ class GamePlatform(Base):
 
 class GameCompany(Base):
     __tablename__ = "game_companies"
-    __table_args__ = (
-        CheckConstraint("is_developer OR is_publisher", name="has_role"),
-    )
+    __table_args__ = (CheckConstraint("is_developer OR is_publisher", name="has_role"),)
 
     game_id: Mapped[int] = mapped_column(
         BigInteger, ForeignKey("games.id", ondelete="CASCADE"), primary_key=True
@@ -114,7 +112,8 @@ class LibraryEntry(Base):
     __table_args__ = (
         UniqueConstraint("user_id", "game_id", name="one_entry_per_user_game"),
         CheckConstraint(
-            "status IN ('playing', 'finished', 'dropped', 'backlog')", name="valid_status"
+            "status IN ('playing', 'finished', 'dropped', 'backlog')",
+            name="valid_status",
         ),
         CheckConstraint("rating BETWEEN 1 AND 10", name="rating_range"),
         CheckConstraint("finished_at >= started_at", name="finished_after_started"),
@@ -150,7 +149,8 @@ class ImportJob(Base):
     __table_args__ = (
         CheckConstraint("attempts >= 0", name="non_negative_attempts"),
         CheckConstraint(
-            "status IN ('pending', 'running', 'succeeded', 'failed')", name="valid_status"
+            "status IN ('pending', 'running', 'succeeded', 'failed')",
+            name="valid_status",
         ),
     )
 

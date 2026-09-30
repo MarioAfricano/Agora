@@ -29,7 +29,7 @@ class IGDBClient:
             self._token = data["access_token"]
             self._token_expires_at = time.time() + data["expires_in"]
         return self._token
-    
+
     def search_games(self, query: str) -> list[dict]:
         query = query.replace('"', "")
         body = (
@@ -48,5 +48,10 @@ class IGDBClient:
         )
         response.raise_for_status()
         return response.json()
+
+
+def cover_url(image_id: str, size: str = "t_cover_small") -> str:
+    return f"https://images.igdb.com/igdb/image/upload/{size}/{image_id}.jpg"
+
 
 igdb = IGDBClient()

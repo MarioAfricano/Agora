@@ -1,5 +1,7 @@
+from datetime import UTC, datetime
 from typing import Annotated
 
+import httpx
 from fastapi import Depends, FastAPI, Form, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -11,6 +13,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from app.auth import get_current_user
 from app.config import settings
 from app.db import engine, get_db
+from app.igdb import cover_url, igdb
 from app.models import User
 from app.security import hash_password, verify_password
 
@@ -156,4 +159,42 @@ def library(
 
     return templates.TemplateResponse(
         request, "library.html", {"current_user": current_user}
+    )
+
+
+@app.get("/search")
+def search(
+    request: Request,
+    current_user: Annotated[User | None, Depends(get_current_user)],
+    q: str = "",
+):
+    if current_user is None:
+        return RedirectResponse(url="\login", status_code=303)
+
+    q = q.strip()
+    results = []
+    error = None
+
+    if q:
+        try:
+            games = igdb.search_games(q)
+        except httpx.HTTPError:
+            error = "Search is temporarily unavailable. Please try again later."
+        else:
+            for game in games:
+                timestamp = game.get("first_release_date")
+                cover = game.get("cover")
+                results.append(
+                    {
+                        "name": game["name"],
+                        "year": datetime.fromtimestamp(timestamp, tz=UTC).year
+                        if timestamp
+                        else None,
+                        "cover_url": cover_url(cover["image_id"]) if cover else None,
+                    }
+                )
+    return templates.TemplateResponse(
+        request,
+        "search.html",
+        {"current_user": current_user, "query": q, "results": results, "error": error},
     )

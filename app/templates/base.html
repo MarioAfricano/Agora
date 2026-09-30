@@ -9,6 +9,7 @@
     <a href="/">Agora</a>
     {% if current_user %}
       <a href="/library">My library</a>
+      <a href="/search">Search</a>
       <span>{{ current_user.email }}</span>
       <form method="post" action="/logout">
         <button type="submit">Log out</button>

@@ -49,6 +49,29 @@ class IGDBClient:
         response.raise_for_status()
         return response.json()
 
+    def get_game(self, igdb_id: int) -> dict | None:
+        body = (
+            "fields name, summary, first_release_date, cover.image_id, "
+            "genres.name, platforms.name, "
+            "involved_companies.company.name, "
+            "involved_companies.developer, involved_companies.publisher;"
+            f"where id = {igdb_id};"
+        )
+        response = httpx.post(
+            f"{API_URL}/games",
+            headers={
+                "Client-ID": settings.igdb_client_id,
+                "Authorization": f"Bearer {self._get_token()}",
+            },
+            content=body,
+            timeout=10,
+        )
+        response.raise_for_status()
+        response_list = response.json()
+        if response_list:
+            return response_list[0]
+        return None
+
 
 def cover_url(image_id: str, size: str = "t_cover_small") -> str:
     return f"https://images.igdb.com/igdb/image/upload/{size}/{image_id}.jpg"

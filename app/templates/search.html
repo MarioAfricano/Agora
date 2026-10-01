@@ -22,6 +22,10 @@
           {% endif %}
           {{ game.name }}
           {% if game.year %}({{ game.year }}){% endif %}
+          <form method="post" action="/library/add">
+            <input type="hidden" name="igdb_id" value="{{ game.igdb_id }}">
+            <button type="submit">Add to library</button>
+          </form>
         </li>
       {% endfor %}
     </ul>

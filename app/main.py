@@ -14,7 +14,8 @@ from app.auth import get_current_user
 from app.config import settings
 from app.db import engine, get_db
 from app.igdb import cover_url, igdb
-from app.models import User
+from app.importer import import_game
+from app.models import LibraryEntry, User
 from app.security import hash_password, verify_password
 
 app = FastAPI(title="Agora")
@@ -191,6 +192,7 @@ def search(
                         if timestamp
                         else None,
                         "cover_url": cover_url(cover["image_id"]) if cover else None,
+                        "igdb_id": game["id"],
                     }
                 )
     return templates.TemplateResponse(
@@ -198,3 +200,28 @@ def search(
         "search.html",
         {"current_user": current_user, "query": q, "results": results, "error": error},
     )
+
+
+@app.post("/library/add")
+def library_add(
+    request: Request,
+    current_user: Annotated[User | None, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
+    igdb_id: Annotated[int, Form()],
+):
+    if current_user is None:
+        return RedirectResponse(url="/login", status_code=303)
+    try:
+        game = import_game(db, igdb_id)
+        if not game:
+            return RedirectResponse(url="/search", status_code=303)
+        library_entry = LibraryEntry(user_id=current_user.id, game_id=game.id)
+
+        db.add(library_entry)
+        db.commit()
+    except httpx.HTTPError:
+        return RedirectResponse(url="/search", status_code=303)
+    except IntegrityError:
+        db.rollback()
+        return RedirectResponse(url="/library", status_code=303)
+    return RedirectResponse(url="/library", status_code=303)

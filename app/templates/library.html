@@ -4,5 +4,21 @@
 
 {% block content %}
   <h1>My library</h1>
-  You have no games yet
+  {% if entries %}
+    <ul>
+      {% for entry, game in entries  %}
+        <li>
+          {% if game.cover_image_id %}
+            <img src="{{ cover_url(game.cover_image_id) }}" alt="Cover of {{ game.name }}" width="45">
+          {% endif %}
+          {{ game.name }}
+          {% if game.release_date %}({{ game.release_date.year }}){% endif %}
+          <span>{{ entry.status }}</span>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>You have no games yet</p>
+    <p><a href="/search">Search for a game to add.</a></p>
+  {% endif %}
 {% endblock %}

@@ -15,12 +15,13 @@ from app.config import settings
 from app.db import engine, get_db
 from app.igdb import cover_url, igdb
 from app.importer import import_game
-from app.models import LibraryEntry, User
+from app.models import Game, LibraryEntry, User
 from app.security import hash_password, verify_password
 
 app = FastAPI(title="Agora")
 app.add_middleware(SessionMiddleware, secret_key=settings.secret_key)
 templates = Jinja2Templates(directory="app/templates")
+templates.env.globals["cover_url"] = cover_url
 
 
 @app.get("/")
@@ -154,12 +155,20 @@ def logout(request: Request):
 def library(
     request: Request,
     current_user: Annotated[User | None, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
 ):
     if current_user is None:
         return RedirectResponse(url="/login", status_code=303)
 
+    entries = db.execute(
+        select(LibraryEntry, Game)
+        .join(Game, LibraryEntry.game_id == Game.id)
+        .where(LibraryEntry.user_id == current_user.id)
+        .order_by(LibraryEntry.created_at.desc())
+    ).all()
+
     return templates.TemplateResponse(
-        request, "library.html", {"current_user": current_user}
+        request, "library.html", {"current_user": current_user, "entries": entries}
     )
 
 

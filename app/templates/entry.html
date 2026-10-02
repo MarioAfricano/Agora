@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}{{ game.name }} · Agora{% endblock %}
+
+{% block content %}
+  <h1>{{ game.name }}</h1>
+    {% if game.cover_image_id %}
+        <img alt="Cover of {{ game.name }}" src="{{ cover_url(game.cover_image_id, "t_cover_big") }}">
+    {% endif %}
+    
+    {% if game.release_date %}<p>Released: {{ game.release_date }}</p>{% endif %}
+    {% if game.summary %}<p>Summary: {{ game.summary }}</p>{% endif %}
+    
+    <p>Status: {{ entry.status }}</p>
+    <p>Hours played: {{ entry.hours_played or "—" }}</p>
+    <p>Rating: {{ entry.rating or "—" }}</p>
+    <p>Notes: {{ entry.notes or "—" }}</p>
+
+    <a href="/library">My library</a>
+{% endblock %}

@@ -11,7 +11,7 @@
           {% if game.cover_image_id %}
             <img src="{{ cover_url(game.cover_image_id) }}" alt="Cover of {{ game.name }}" width="45">
           {% endif %}
-          {{ game.name }}
+          <a href="/library/{{ entry.id }}">{{ game.name }}</a>
           {% if game.release_date %}({{ game.release_date.year }}){% endif %}
           <span>{{ entry.status }}</span>
         </li>

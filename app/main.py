@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 from typing import Annotated
 
 import httpx
-from fastapi import Depends, FastAPI, Form, Request
+from fastapi import Depends, FastAPI, Form, HTTPException, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import select, text
@@ -179,7 +179,7 @@ def search(
     q: str = "",
 ):
     if current_user is None:
-        return RedirectResponse(url="\login", status_code=303)
+        return RedirectResponse(url="/login", status_code=303)
 
     q = q.strip()
     results = []
@@ -234,3 +234,24 @@ def library_add(
         db.rollback()
         return RedirectResponse(url="/library", status_code=303)
     return RedirectResponse(url="/library", status_code=303)
+
+
+@app.get("/library/{entry_id}")
+def library_entry(
+    request: Request,
+    entry_id: int,
+    current_user: Annotated[User | None, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
+):
+    if current_user is None:
+        return RedirectResponse(url="/login", status_code=303)
+    entry = db.get(LibraryEntry, entry_id)
+    if not entry or entry.user_id != current_user.id:
+        raise HTTPException(status_code=404)
+    game = db.get(Game, entry.game_id)
+
+    return templates.TemplateResponse(
+        request,
+        "entry.html",
+        {"current_user": current_user, "entry": entry, "game": game},
+    )

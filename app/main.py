@@ -1,4 +1,5 @@
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
+from decimal import Decimal
 from typing import Annotated
 
 import httpx
@@ -15,7 +16,7 @@ from app.config import settings
 from app.db import engine, get_db
 from app.igdb import cover_url, igdb
 from app.importer import import_game
-from app.models import Game, LIBRARY_STATUSES, LibraryEntry, User
+from app.models import LIBRARY_STATUSES, Game, LibraryEntry, User
 from app.security import hash_password, verify_password
 
 app = FastAPI(title="Agora")
@@ -236,6 +237,13 @@ def library_add(
     return RedirectResponse(url="/library", status_code=303)
 
 
+def _get_owned_entry(db: Session, entry_id: int, user: User) -> LibraryEntry:
+    entry = db.get(LibraryEntry, entry_id)
+    if entry is None or entry.user_id != user.id:
+        raise HTTPException(status_code=404)
+    return entry
+
+
 @app.get("/library/{entry_id}")
 def library_entry(
     request: Request,
@@ -245,13 +253,44 @@ def library_entry(
 ):
     if current_user is None:
         return RedirectResponse(url="/login", status_code=303)
-    entry = db.get(LibraryEntry, entry_id)
-    if not entry or entry.user_id != current_user.id:
-        raise HTTPException(status_code=404)
+    entry = _get_owned_entry(db, entry_id, current_user)
     game = db.get(Game, entry.game_id)
 
     return templates.TemplateResponse(
         request,
         "entry.html",
-        {"current_user": current_user, "entry": entry, "game": game, "statuses": LIBRARY_STATUSES},
+        {
+            "current_user": current_user,
+            "entry": entry,
+            "game": game,
+            "statuses": LIBRARY_STATUSES,
+        },
     )
+
+
+@app.post("/library/{entry_id}")
+def library_entry_update(
+    entry_id: int,
+    current_user: Annotated[User | None, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
+    status: Annotated[str, Form()],
+    hours_played: Annotated[str, Form()] = "",
+    rating: Annotated[str, Form()] = "",
+    started_at: Annotated[str, Form()] = "",
+    finished_at: Annotated[str, Form()] = "",
+    notes: Annotated[str, Form()] = "",
+):
+    if current_user is None:
+        return RedirectResponse(url="/login", status_code=303)
+    entry = _get_owned_entry(db, entry_id, current_user)
+
+    entry.status = status
+    entry.rating = int(rating) if rating else None
+    entry.hours_played = Decimal(hours_played) if hours_played else None
+    entry.started_at = date.fromisoformat(started_at) if started_at else None
+    entry.finished_at = date.fromisoformat(finished_at) if finished_at else None
+    entry.notes = notes.strip() or None
+
+    db.commit()
+
+    return RedirectResponse(url=f"/library/{entry.id}", status_code=303)

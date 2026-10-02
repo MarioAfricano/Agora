@@ -106,7 +106,10 @@ class GameCompany(Base):
     is_developer: Mapped[bool]
     is_publisher: Mapped[bool]
 
+
 LIBRARY_STATUSES = ["playing", "finished", "dropped", "backlog"]
+
+
 class LibraryEntry(Base):
     __tablename__ = "library_entries"
     __table_args__ = (

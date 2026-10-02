@@ -15,7 +15,7 @@ from app.config import settings
 from app.db import engine, get_db
 from app.igdb import cover_url, igdb
 from app.importer import import_game
-from app.models import Game, LibraryEntry, User
+from app.models import Game, LIBRARY_STATUSES, LibraryEntry, User
 from app.security import hash_password, verify_password
 
 app = FastAPI(title="Agora")
@@ -253,5 +253,5 @@ def library_entry(
     return templates.TemplateResponse(
         request,
         "entry.html",
-        {"current_user": current_user, "entry": entry, "game": game},
+        {"current_user": current_user, "entry": entry, "game": game, "statuses": LIBRARY_STATUSES},
     )

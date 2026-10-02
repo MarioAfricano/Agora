@@ -16,5 +16,52 @@
     <p>Rating: {{ entry.rating or "—" }}</p>
     <p>Notes: {{ entry.notes or "—" }}</p>
 
+    <h2>Edit</h2>
+    <form method="post" action="/library/{{ entry.id }}">
+        <p>
+            <label>
+                Status
+                <select id="status" name="status">
+                    {% for status_name in statuses %}
+                        <option value="{{ status_name }}" {% if status_name == entry.status %}selected{% endif %}>{{ status_name | capitalize }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+        </p>
+        <p>
+            <label>
+                Hours played
+                <input type="number" min="0" step="0.1" value="{{ entry.hours_played or '' }}" name="hours_played">
+            </label>
+        </p>
+        <p>
+            <label>
+                Rating
+                <input type="number" min="1" max="10" value="{{ entry.rating or '' }}" name="rating">
+            </label>
+        </p>
+        <p>
+            <label>
+                Started
+                <input type="date" value="{{ entry.started_at or '' }}" name="started_at">
+            </label>
+        </p>
+        <p>
+            <label>
+                Finished
+                <input type="date" value="{{ entry.finished_at or '' }}" name="finished_at">
+            </label>
+        </p>
+        <p>
+            <label>
+                Notes
+                <textarea name="notes">{{ entry.notes or '' }}</textarea>
+            </label>
+        </p>
+        <button type="submit">Save</button>
+    </form>
+
+
+
     <a href="/library">My library</a>
 {% endblock %}

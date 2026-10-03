@@ -4,7 +4,7 @@ from typing import Annotated
 
 import httpx
 from fastapi import Depends, FastAPI, Form, HTTPException, Request
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import select, text
 from sqlalchemy.exc import IntegrityError, OperationalError
@@ -390,3 +390,20 @@ def library_entry_status(
         "partials/entry_status.html",
         {"entry": entry, "statuses": LIBRARY_STATUSES},
     )
+
+
+@app.post("/library/{entry_id}/delete")
+def library_delete(
+    entry_id: int,
+    current_user: Annotated[User | None, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
+):
+    if current_user is None:
+        raise HTTPException(status_code=401)
+    entry = _get_owned_entry(db, entry_id, current_user)
+
+    db.delete(entry)
+    db.commit()
+
+    return HTMLResponse("<li>Game removed.</li>")
+    

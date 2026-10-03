@@ -24,6 +24,12 @@ app.add_middleware(SessionMiddleware, secret_key=settings.secret_key)
 templates = Jinja2Templates(directory="app/templates")
 templates.env.globals["cover_url"] = cover_url
 
+SORT_OPTIONS = {
+    "added": LibraryEntry.created_at.desc(),
+    "name": Game.name.asc(),
+    "rating": LibraryEntry.rating.desc().nulls_last(),
+}
+
 
 @app.get("/")
 def home(
@@ -158,12 +164,15 @@ def library(
     current_user: Annotated[User | None, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
     status: str = "",
+    sort: str = "added",
 ):
     if current_user is None:
         return RedirectResponse(url="/login", status_code=303)
 
     if status not in LIBRARY_STATUSES:
         status = ""
+    if sort not in SORT_OPTIONS:
+        sort = "added"
 
     query = (
         select(LibraryEntry, Game)
@@ -174,7 +183,7 @@ def library(
     if status:
         query = query.where(LibraryEntry.status == status)
 
-    query = query.order_by(LibraryEntry.created_at.desc())
+    query = query.order_by(SORT_OPTIONS[sort], LibraryEntry.id.desc())
     entries = db.execute(query).all()
 
     return templates.TemplateResponse(
@@ -184,7 +193,9 @@ def library(
             "current_user": current_user,
             "entries": entries,
             "statuses": LIBRARY_STATUSES,
+            "sorts": SORT_OPTIONS,
             "current_status": status,
+            "current_sort": sort,
         },
     )
 
@@ -416,4 +427,3 @@ def library_delete(
     db.commit()
 
     return HTMLResponse("<li>Game removed.</li>")
-    

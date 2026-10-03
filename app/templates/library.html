@@ -14,7 +14,15 @@
         {% endfor %}
       </select>
     </label>
-    <button type="submit">Filter</button>
+    <label>
+      Sort
+      <select name="sort">
+        {% for sort in sorts %}
+          <option value="{{ sort }}" {% if sort == current_sort %}selected{% endif %}>{{ sort | capitalize }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <button type="submit">Apply</button>
   </form>
   {% if entries %}
     <ul>

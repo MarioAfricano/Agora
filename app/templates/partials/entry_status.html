@@ -1,0 +1,10 @@
+<select name="status"
+        aria-label="Status"
+        hx-post="/library/{{ entry.id }}/status"
+        hx-trigger="change"
+        hx-target="this"
+        hx-swap="outerHTML">
+    {% for status_name in statuses %}
+        <option value="{{ status_name }}" {% if status_name == entry.status %}selected{% endif %}>{{ status_name | capitalize }}</option>
+    {% endfor %}
+</select>

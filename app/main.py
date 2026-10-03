@@ -157,16 +157,25 @@ def library(
     request: Request,
     current_user: Annotated[User | None, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
+    status: str = "",
 ):
     if current_user is None:
         return RedirectResponse(url="/login", status_code=303)
 
-    entries = db.execute(
+    if status not in LIBRARY_STATUSES:
+        status = ""
+
+    query = (
         select(LibraryEntry, Game)
         .join(Game, LibraryEntry.game_id == Game.id)
         .where(LibraryEntry.user_id == current_user.id)
-        .order_by(LibraryEntry.created_at.desc())
-    ).all()
+    )
+
+    if status:
+        query = query.where(LibraryEntry.status == status)
+
+    query = query.order_by(LibraryEntry.created_at.desc())
+    entries = db.execute(query).all()
 
     return templates.TemplateResponse(
         request,
@@ -175,6 +184,7 @@ def library(
             "current_user": current_user,
             "entries": entries,
             "statuses": LIBRARY_STATUSES,
+            "current_status": status,
         },
     )
 

@@ -4,6 +4,18 @@
 
 {% block content %}
   <h1>My library</h1>
+  <form method="get" action="/library">
+    <label>
+      Status
+      <select name="status">
+        <option value="">All</option>
+        {% for status_name in statuses %}
+          <option value="{{ status_name }}" {% if status_name == current_status %}selected{% endif %}>{{ status_name | capitalize }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <button type="submit">Filter</button>
+  </form>
   {% if entries %}
     <ul>
       {% for entry, game in entries  %}
@@ -21,6 +33,8 @@
         </li>
       {% endfor %}
     </ul>
+  {% elif current_status %}
+    <p>No games with status "{{ current_status | capitalize }}".</p>
   {% else %}
     <p>You have no games yet</p>
     <p><a href="/search">Search for a game to add.</a></p>

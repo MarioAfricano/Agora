@@ -32,6 +32,21 @@ services:
       - ./app:/code/app
       - ./alembic.ini:/code/alembic.ini
       - ./migrations:/code/migrations
-
+  test-db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: agora_test
+      POSTGRES_PASSWORD: agora_test
+      POSTGRES_DB: agora_test
+    tmpfs:
+      - /var/lib/postgresql/data
+    profiles: ["test"]
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agora_test -d agora_test"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 volumes:
   pgdata:

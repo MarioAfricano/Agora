@@ -22,6 +22,14 @@
         {% endfor %}
       </select>
     </label>
+    <label>
+      <select name="genre">
+        <option value="">All</option>
+        {% for genre in genres %}
+          <option value="{{ genre.id }}" {% if genre.id == current_genre %}selected{% endif %}>{{ genre.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
     <button type="submit">Apply</button>
   </form>
   {% if entries %}

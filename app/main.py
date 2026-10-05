@@ -16,7 +16,7 @@ from app.config import settings
 from app.db import engine, get_db
 from app.igdb import cover_url, igdb
 from app.importer import import_game
-from app.models import LIBRARY_STATUSES, Game, LibraryEntry, User
+from app.models import LIBRARY_STATUSES, Game, GameGenre, Genre, LibraryEntry, User
 from app.security import hash_password, verify_password
 
 app = FastAPI(title="Agora")
@@ -165,6 +165,7 @@ def library(
     db: Annotated[Session, Depends(get_db)],
     status: str = "",
     sort: str = "added",
+    genre: str = "",
 ):
     if current_user is None:
         return RedirectResponse(url="/login", status_code=303)
@@ -173,6 +174,16 @@ def library(
         status = ""
     if sort not in SORT_OPTIONS:
         sort = "added"
+    genre_id = int(genre) if genre.isdigit() else None
+
+    genres = db.scalars(
+        select(Genre)
+        .join(GameGenre, GameGenre.genre_id == Genre.id)
+        .join(LibraryEntry, LibraryEntry.game_id == GameGenre.game_id)
+        .where(LibraryEntry.user_id == current_user.id)
+        .distinct()
+        .order_by(Genre.name)
+    ).all()
 
     query = (
         select(LibraryEntry, Game)
@@ -182,6 +193,10 @@ def library(
 
     if status:
         query = query.where(LibraryEntry.status == status)
+    if genre_id is not None:
+        query = query.where(
+            Game.id.in_(select(GameGenre.game_id).where(GameGenre.genre_id == genre_id))
+        )
 
     query = query.order_by(SORT_OPTIONS[sort], LibraryEntry.id.desc())
     entries = db.execute(query).all()
@@ -196,6 +211,8 @@ def library(
             "sorts": SORT_OPTIONS,
             "current_status": status,
             "current_sort": sort,
+            "genres": genres,
+            "current_genre": genre_id,
         },
     )
 

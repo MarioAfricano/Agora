@@ -241,25 +241,26 @@ def library(
     query = query.limit(PAGE_SIZE).offset((page_number - 1) * PAGE_SIZE)
     entries = db.execute(query).all()
 
-    return templates.TemplateResponse(
-        request,
-        "library.html",
-        {
-            "current_user": current_user,
-            "entries": entries,
-            "statuses": LIBRARY_STATUSES,
-            "sorts": SORT_OPTIONS,
-            "current_status": status,
-            "current_sort": sort,
-            "genres": genres,
-            "current_genre": genre_id,
-            "current_platform": platform_id,
-            "platforms": platforms,
-            "page": page_number,
-            "total_pages": total_pages,
-            "total": total,
-        },
-    )
+    context = {
+        "current_user": current_user,
+        "entries": entries,
+        "statuses": LIBRARY_STATUSES,
+        "sorts": SORT_OPTIONS,
+        "current_status": status,
+        "current_sort": sort,
+        "genres": genres,
+        "current_genre": genre_id,
+        "current_platform": platform_id,
+        "platforms": platforms,
+        "page": page_number,
+        "total_pages": total_pages,
+        "total": total,
+    }
+    if request.headers.get("HX-Request"):
+        return templates.TemplateResponse(
+            request, "partials/library_list.html", context
+        )
+    return templates.TemplateResponse(request, "library.html", context)
 
 
 @app.get("/search")

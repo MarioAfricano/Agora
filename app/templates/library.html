@@ -4,7 +4,11 @@
 
 {% block content %}
   <h1>My library</h1>
-  <form method="get" action="/library">
+  <form method="get" action="/library"
+        hx-get="/library"
+        hx-target="#library-list"
+        hx-trigger="change"
+        hx-push-url="true">
     <label>
       Status
       <select name="status">
@@ -42,34 +46,8 @@
     </label>
     <button type="submit">Apply</button>
   </form>
-  {% if entries %}
-    <ul>
-      {% for entry, game in entries  %}
-        <li>
-          {% if game.cover_image_id %}
-            <img src="{{ cover_url(game.cover_image_id) }}" alt="Cover of {{ game.name }}" width="45">
-          {% endif %}
-          <a href="/library/{{ entry.id }}">{{ game.name }}</a>
-          {% if game.release_date %}({{ game.release_date.year }}){% endif %}
-          {% include "partials/entry_status.html" %}
-          <button hx-post="/library/{{ entry.id }}/delete"
-                  hx-confirm="Are you sure you want to remove {{ game.name }} from your library?"
-                  hx-target="closest li"
-                  hx-swap="outerHTML">Remove</button>
-        </li>
-      {% endfor %}
-    </ul>
-    {% if page > 1 %}
-    <a href="{{ request.url.include_query_params(page=page - 1) }}">Previous</a>
-    {% endif %}
-    Page {{ page }} of {{ total_pages }}
-    {% if page < total_pages %}
-    <a href="{{ request.url.include_query_params(page=page + 1) }}">Next</a>
-    {% endif %}
-  {% elif current_status %}
-    <p>No games with status "{{ current_status | capitalize }}".</p>
-  {% else %}
-    <p>You have no games yet</p>
-    <p><a href="/search">Search for a game to add.</a></p>
-  {% endif %}
+
+  <div id="library-list">
+    {% include "partials/library_list.html" %}
+  </div>
 {% endblock %}

@@ -6,7 +6,7 @@ import httpx
 from fastapi import Depends, FastAPI, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import select, text
+from sqlalchemy import func, select, text
 from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
@@ -33,6 +33,7 @@ app.add_middleware(SessionMiddleware, secret_key=settings.secret_key)
 templates = Jinja2Templates(directory="app/templates")
 templates.env.globals["cover_url"] = cover_url
 
+PAGE_SIZE = 20
 SORT_OPTIONS = {
     "added": LibraryEntry.created_at.desc(),
     "name": Game.name.asc(),
@@ -176,6 +177,7 @@ def library(
     sort: str = "added",
     genre: str = "",
     platform: str = "",
+    page: str = "1",
 ):
     if current_user is None:
         return RedirectResponse(url="/login", status_code=303)
@@ -184,8 +186,12 @@ def library(
         status = ""
     if sort not in SORT_OPTIONS:
         sort = "added"
+
     genre_id = int(genre) if genre.isdigit() else None
     platform_id = int(platform) if platform.isdigit() else None
+    page_number = int(page) if page.isdigit() else 1
+    if page_number < 1:
+        page_number = 1
 
     genres = db.scalars(
         select(Genre)
@@ -226,7 +232,13 @@ def library(
             )
         )
 
+    total = db.scalar(select(func.count()).select_from(query.subquery()))
+    total_pages = max(1, (total + PAGE_SIZE - 1) // PAGE_SIZE)
+    if page_number > total_pages:
+        page_number = total_pages
+
     query = query.order_by(SORT_OPTIONS[sort], LibraryEntry.id.desc())
+    query = query.limit(PAGE_SIZE).offset((page_number - 1) * PAGE_SIZE)
     entries = db.execute(query).all()
 
     return templates.TemplateResponse(
@@ -243,6 +255,9 @@ def library(
             "current_genre": genre_id,
             "current_platform": platform_id,
             "platforms": platforms,
+            "page": page_number,
+            "total_pages": total_pages,
+            "total": total,
         },
     )
 

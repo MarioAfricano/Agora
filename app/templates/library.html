@@ -59,6 +59,13 @@
         </li>
       {% endfor %}
     </ul>
+    {% if page > 1 %}
+    <a href="{{ request.url.include_query_params(page=page - 1) }}">Previous</a>
+    {% endif %}
+    Page {{ page }} of {{ total_pages }}
+    {% if page < total_pages %}
+    <a href="{{ request.url.include_query_params(page=page + 1) }}">Next</a>
+    {% endif %}
   {% elif current_status %}
     <p>No games with status "{{ current_status | capitalize }}".</p>
   {% else %}

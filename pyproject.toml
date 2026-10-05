@@ -5,3 +5,6 @@ extend-exclude = ["migrations"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

@@ -16,7 +16,16 @@ from app.config import settings
 from app.db import engine, get_db
 from app.igdb import cover_url, igdb
 from app.importer import import_game
-from app.models import LIBRARY_STATUSES, Game, GameGenre, Genre, LibraryEntry, User
+from app.models import (
+    LIBRARY_STATUSES,
+    Game,
+    GameGenre,
+    GamePlatform,
+    Genre,
+    LibraryEntry,
+    Platform,
+    User,
+)
 from app.security import hash_password, verify_password
 
 app = FastAPI(title="Agora")
@@ -166,6 +175,7 @@ def library(
     status: str = "",
     sort: str = "added",
     genre: str = "",
+    platform: str = "",
 ):
     if current_user is None:
         return RedirectResponse(url="/login", status_code=303)
@@ -175,6 +185,7 @@ def library(
     if sort not in SORT_OPTIONS:
         sort = "added"
     genre_id = int(genre) if genre.isdigit() else None
+    platform_id = int(platform) if platform.isdigit() else None
 
     genres = db.scalars(
         select(Genre)
@@ -183,6 +194,15 @@ def library(
         .where(LibraryEntry.user_id == current_user.id)
         .distinct()
         .order_by(Genre.name)
+    ).all()
+
+    platforms = db.scalars(
+        select(Platform)
+        .join(GamePlatform, GamePlatform.platform_id == Platform.id)
+        .join(LibraryEntry, LibraryEntry.game_id == GamePlatform.game_id)
+        .where(LibraryEntry.user_id == current_user.id)
+        .distinct()
+        .order_by(Platform.name)
     ).all()
 
     query = (
@@ -196,6 +216,14 @@ def library(
     if genre_id is not None:
         query = query.where(
             Game.id.in_(select(GameGenre.game_id).where(GameGenre.genre_id == genre_id))
+        )
+    if platform_id is not None:
+        query = query.where(
+            Game.id.in_(
+                select(GamePlatform.game_id).where(
+                    GamePlatform.platform_id == platform_id
+                )
+            )
         )
 
     query = query.order_by(SORT_OPTIONS[sort], LibraryEntry.id.desc())
@@ -213,6 +241,8 @@ def library(
             "current_sort": sort,
             "genres": genres,
             "current_genre": genre_id,
+            "current_platform": platform_id,
+            "platforms": platforms,
         },
     )
 

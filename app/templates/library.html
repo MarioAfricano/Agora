@@ -23,10 +23,20 @@
       </select>
     </label>
     <label>
+      Genre
       <select name="genre">
         <option value="">All</option>
         {% for genre in genres %}
           <option value="{{ genre.id }}" {% if genre.id == current_genre %}selected{% endif %}>{{ genre.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      Platform
+      <select name="platform">
+        <option value="">All</option>
+        {% for platform in platforms %}
+          <option value="{{ platform.id }}" {% if platform.id == current_platform %}selected{% endif %}>{{ platform.name }}</option>
         {% endfor %}
       </select>
     </label>

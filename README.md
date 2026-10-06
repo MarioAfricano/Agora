@@ -4,7 +4,7 @@ A personal game library that automatically imports game data from IGDB and shows
 
 Add a game by name, pick the right match, and Agora fetches the cover, release date, genres, platforms and companies in the background. Then track your status, hours played, rating and notes for every game you've played.
 
-> 🚧 **Status:** in development. See the [roadmap](#roadmap) below.
+> 🚧 **Status:** in development. Phase 1 (the web app) is complete; see the [roadmap](#roadmap) below.
 
 ---
 
@@ -182,7 +182,7 @@ erDiagram
 ## Roadmap
 
 - [x] **Phase 0 — Design:** repository setup, IGDB exploration, data model and architecture
-- [ ] **Phase 1 — Web app and Docker:** authentication, library management, search and filters, web pages, Docker Compose setup
+- [x] **Phase 1 — Web app and Docker:** authentication, library management, search and filters, web pages, Docker Compose setup
 - [ ] **Phase 2 — Async import pipeline:** queue, worker, IGDB integration, S3 covers, retries, idempotency, dead-letter queue
 - [ ] **Phase 3 — Statistics:** SQL aggregations and charts
 - [ ] **Phase 4 — AWS with Terraform:** networking, RDS, S3, SQS, ECR and compute, all as code
@@ -193,7 +193,102 @@ erDiagram
 
 ## Getting started
 
-Setup instructions will be added in Phase 1.
+### Prerequisites
+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (includes Docker Compose)
+- [Git](https://git-scm.com/)
+- Python 3.11 or more recent, only needed to run the tests and the linter outside Docker
+- IGDB credentials: a Client ID and a Client Secret from the [Twitch developer console](https://dev.twitch.tv/console)
+
+### 1. Clone the repository
+
+```bash
+git clone git@github.com:MarioAfricano/Agora.git
+cd Agora
+```
+
+### 2. Configure the environment
+
+All configuration and secrets live in a `.env` file, which is never committed. Create it from the example:
+
+```bash
+cp .env.example .env              # macOS / Linux
+Copy-Item .env.example .env       # Windows PowerShell
+```
+
+Then fill in the values:
+
+| Variable | Value |
+|---|---|
+| `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` | Any values. Use only letters and digits in the password, because it is part of the database URL |
+| `IGDB_CLIENT_ID`, `IGDB_CLIENT_SECRET` | Your Twitch application credentials |
+| `SECRET_KEY` | A long random string that signs the session cookies. Generate one with `python -c "import secrets; print(secrets.token_urlsafe(32))"` |
+
+### 3. Start the app
+
+```bash
+docker compose up -d --build
+```
+
+This builds the web image and starts two containers: `web` (FastAPI) and `db` (PostgreSQL). The web container waits until the database is healthy.
+
+### 4. Create the database tables
+
+The database schema is managed by Alembic migrations, which are not applied automatically. Run them once after the first start, and again whenever new migrations are added:
+
+```bash
+docker compose exec web alembic upgrade head
+```
+
+### 5. Open the app
+
+Go to [http://localhost:8000](http://localhost:8000), create an account and search for a game to add to your library.
+
+### Running the tests
+
+The tests run on your machine against a separate, throwaway PostgreSQL container, so they never touch your data.
+
+Create a virtual environment and install the dependencies:
+
+```bash
+python -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt -r requirements-dev.txt          # macOS / Linux
+.venv\Scripts\python -m pip install -r requirements.txt -r requirements-dev.txt      # Windows
+```
+
+Start the test database. It belongs to the `test` profile, so a normal `docker compose up` does not start it:
+
+```bash
+docker compose --profile test up -d test-db
+```
+
+Run the tests:
+
+```bash
+.venv/bin/python -m pytest      # macOS / Linux
+.venv\Scripts\python -m pytest  # Windows
+```
+
+### Linting and formatting
+
+The code is checked and formatted with [Ruff](https://docs.astral.sh/ruff/):
+
+```bash
+python -m ruff check .
+python -m ruff format .
+```
+
+Run them with the virtual environment's Python, as in the test commands above.
+
+### Useful commands
+
+| Command | What it does |
+|---|---|
+| `docker compose logs -f web` | Follow the web app logs |
+| `docker compose exec db psql -U <POSTGRES_USER> -d <POSTGRES_DB>` | Open a SQL shell on the database |
+| `docker compose exec web alembic current` | Show the applied migration |
+| `docker compose down` | Stop and remove the containers (the data is kept) |
+| `docker compose down -v` | Stop the containers and **delete all data** |
 
 ---
 

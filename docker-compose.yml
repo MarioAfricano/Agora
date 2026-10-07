@@ -60,5 +60,7 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+    volumes:
+      - ./localstack/init:/etc/localstack/init/ready.d
 volumes:
   pgdata:

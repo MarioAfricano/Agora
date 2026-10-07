@@ -21,12 +21,18 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      localstack:
+        condition: service_healthy
     environment:
       DATABASE_URL: "postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}"
       WATCHFILES_FORCE_POLLING: "true"
       SECRET_KEY: ${SECRET_KEY}
       IGDB_CLIENT_ID: ${IGDB_CLIENT_ID}
       IGDB_CLIENT_SECRET: ${IGDB_CLIENT_SECRET}
+      AWS_ENDPOINT_URL: http://localstack:4566
+      AWS_DEFAULT_REGION: eu-west-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
     command: ["uvicorn", "app.main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]
     volumes:
       - ./app:/code/app

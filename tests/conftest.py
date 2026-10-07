@@ -7,6 +7,9 @@ os.environ["DATABASE_URL"] = (
 os.environ["SECRET_KEY"] = "test-secret-key"
 os.environ["IGDB_CLIENT_ID"] = "test"
 os.environ["IGDB_CLIENT_SECRET"] = "test"
+os.environ["AWS_DEFAULT_REGION"] = "eu-west-1"
+os.environ["AWS_ACCESS_KEY_ID"] = "test"
+os.environ["AWS_SECRET_ACCESS_KEY"] = "test"
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402

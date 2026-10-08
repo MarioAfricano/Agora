@@ -3,7 +3,7 @@
       {% for entry, game in entries  %}
         <li>
           {% if game.cover_image_id %}
-            <img src="{{ cover_url(game.cover_image_id) }}" alt="Cover of {{ game.name }}" width="45">
+            <img src="{{ game_cover_url(game) }}" alt="Cover of {{ game.name }}" width="45">
           {% endif %}
           <a href="/library/{{ entry.id }}">{{ game.name }}</a>
           {% if game.release_date %}({{ game.release_date.year }}){% endif %}

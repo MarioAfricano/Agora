@@ -3,7 +3,7 @@ from decimal import Decimal, InvalidOperation
 from typing import Annotated
 
 import httpx
-from fastapi import Depends, FastAPI, Form, HTTPException, Request
+from fastapi import Depends, FastAPI, Form, HTTPException, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import func, select, text
@@ -28,11 +28,21 @@ from app.models import (
     User,
 )
 from app.security import hash_password, verify_password
+from app.storage import s3
 
 app = FastAPI(title="Agora")
 app.add_middleware(SessionMiddleware, secret_key=settings.secret_key)
 templates = Jinja2Templates(directory="app/templates")
+
+
+def game_cover_url(game: Game, size: str = "t_cover_small") -> str:
+    if game.cover_s3_key:
+        return f"/covers/{game.id}"
+    return cover_url(game.cover_image_id, size)
+
+
 templates.env.globals["cover_url"] = cover_url
+templates.env.globals["game_cover_url"] = game_cover_url
 
 PAGE_SIZE = 20
 SORT_OPTIONS = {
@@ -505,3 +515,23 @@ def library_delete(
     db.commit()
 
     return HTMLResponse("<li>Game removed.</li>")
+
+
+@app.get("/covers/{game_id}")
+def covers(
+    game_id: int,
+    db: Annotated[Session, Depends(get_db)],
+):
+    game = db.get(Game, game_id)
+    if game is None or not game.cover_s3_key:
+        raise HTTPException(status_code=404)
+
+    image = s3.get_object(
+        Bucket=settings.cover_bucket,
+        Key=game.cover_s3_key,
+    )
+    return Response(
+        headers={"Cache-Control": "public, max-age=86400"},
+        content=image["Body"].read(),
+        media_type=image["ContentType"],
+    )

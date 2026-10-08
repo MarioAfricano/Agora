@@ -5,7 +5,7 @@
 {% block content %}
   <h1>{{ game.name }}</h1>
     {% if game.cover_image_id %}
-        <img alt="Cover of {{ game.name }}" src="{{ cover_url(game.cover_image_id, "t_cover_big") }}">
+        <img alt="Cover of {{ game.name }}" src="{{ game_cover_url(game, "t_cover_big") }}">
     {% endif %}
     
     {% if game.release_date %}<p>Released: {{ game.release_date }}</p>{% endif %}

@@ -8,6 +8,9 @@ from app.import_queue import get_queue_url, sqs
 from app.importer import import_game
 from app.models import ImportJob, LibraryEntry
 
+# Same value as maxReceiveCount on the queue
+MAX_ATTEMPTS = 3
+
 
 def main():
     queue_url = get_queue_url()
@@ -25,6 +28,7 @@ def main():
                     process_job(db, job_id)
             except Exception as error:
                 print(f"Job {job_id} failed: {error}")
+                handle_failure(job_id, error)
                 continue
             sqs.delete_message(
                 QueueUrl=queue_url, ReceiptHandle=message["ReceiptHandle"]
@@ -59,6 +63,20 @@ def process_job(db: Session, job_id: int) -> None:
         db.add(LibraryEntry(user_id=job.user_id, game_id=game.id))
     job.status = "succeeded"
     db.commit()
+
+
+def handle_failure(job_id, error):
+    with SessionLocal() as db:
+        job = db.get(ImportJob, job_id)
+        if job is None:
+            return
+
+        if job.attempts >= MAX_ATTEMPTS:
+            job.status = "failed"
+            job.error = str(error)
+        else:
+            job.status = "pending"
+        db.commit()
 
 
 if __name__ == "__main__":

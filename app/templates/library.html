@@ -46,7 +46,16 @@
     </label>
     <button type="submit">Apply</button>
   </form>
-
+  {% if importing_count %}
+    <p>
+      {% if importing_count == 1 %}
+        1 game is being imported
+      {% else %}
+        {{ importing_count }} games are being imported
+      {% endif %}
+      Refresh the page in a few seconds to see it.
+    </p>
+  {% endif %}
   <div id="library-list">
     {% include "partials/library_list.html" %}
   </div>

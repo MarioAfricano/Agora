@@ -242,6 +242,15 @@ def library(
     query = query.limit(PAGE_SIZE).offset((page_number - 1) * PAGE_SIZE)
     entries = db.execute(query).all()
 
+    importing_count = db.scalar(
+        select(func.count())
+        .select_from(ImportJob)
+        .where(
+            ImportJob.user_id == current_user.id,
+            ImportJob.status.in_(["pending", "running"]),
+        )
+    )
+
     context = {
         "current_user": current_user,
         "entries": entries,
@@ -256,6 +265,7 @@ def library(
         "page": page_number,
         "total_pages": total_pages,
         "total": total,
+        "importing_count": importing_count,
     }
     if request.headers.get("HX-Request"):
         return templates.TemplateResponse(

@@ -7,6 +7,7 @@ from app.db import SessionLocal
 from app.import_queue import get_queue_url, sqs
 from app.importer import import_game
 from app.models import ImportJob, LibraryEntry
+from app.storage import upload_cover
 
 # Same value as maxReceiveCount on the queue
 MAX_ATTEMPTS = 3
@@ -51,6 +52,11 @@ def process_job(db: Session, job_id: int) -> None:
         job.error = "Game not found on IGDB"
         db.commit()
         return
+
+    if game.cover_image_id and game.cover_s3_key is None:
+        game.cover_s3_key = upload_cover(
+            igdb_id=game.igdb_id, image_id=game.cover_image_id
+        )
 
     job.game_id = game.id
     existing = db.scalar(

@@ -15,13 +15,14 @@ from app.auth import get_current_user
 from app.config import settings
 from app.db import engine, get_db
 from app.igdb import cover_url, igdb
-from app.importer import import_game
+from app.import_queue import send_import_job
 from app.models import (
     LIBRARY_STATUSES,
     Game,
     GameGenre,
     GamePlatform,
     Genre,
+    ImportJob,
     LibraryEntry,
     Platform,
     User,
@@ -311,19 +312,23 @@ def library_add(
 ):
     if current_user is None:
         return RedirectResponse(url="/login", status_code=303)
-    try:
-        game = import_game(db, igdb_id)
-        if not game:
-            return RedirectResponse(url="/search", status_code=303)
+    game = db.scalar(select(Game).where(Game.igdb_id == igdb_id))
+    if game is not None:
         library_entry = LibraryEntry(user_id=current_user.id, game_id=game.id)
 
         db.add(library_entry)
+        try:
+            db.commit()
+        except IntegrityError:
+            db.rollback()
+            return RedirectResponse(url="/library", status_code=303)
+
+    else:
+        job = ImportJob(user_id=current_user.id, igdb_id=igdb_id)
+        db.add(job)
         db.commit()
-    except httpx.HTTPError:
-        return RedirectResponse(url="/search", status_code=303)
-    except IntegrityError:
-        db.rollback()
-        return RedirectResponse(url="/library", status_code=303)
+        send_import_job(job.id)
+
     return RedirectResponse(url="/library", status_code=303)
 
 
